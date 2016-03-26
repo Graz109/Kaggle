@@ -5,3 +5,6 @@ My focus on this was less on classification and more to practice an implementati
 
 -Titanic:
 Predicting who survived on the Titanic
+
+-Animal Shelter Outcomes
+ https://www.kaggle.com/c/shelter-animal-outcomes
