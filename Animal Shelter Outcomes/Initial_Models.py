@@ -20,19 +20,21 @@ def data_import(filepath):
     fixed_sex = data['SexuponOutcome'].str.split(' ')
     #If spayed or neutered, make fixed 1, else false
         
-    data['fixed'] = [1 if x in ['Neutered', 'Spayed'] else 0 for x in fixed_sex.str[0]]
-    data['unknown_fixed'] = [1 if x in ['Unknown'] else 0 for x in fixed_sex.str[0]]
-    data['active_sex'] = [1 if x in ['Intact'] else 0 for x in fixed_sex.str[0]]
-
     #data['fixed'] = [1 if x in ['Neutered', 'Spayed'] else 0 for x in fixed_sex.str[0]]
+    #data['unknown_fixed'] = [1 if x in ['Unknown'] else 0 for x in fixed_sex.str[0]]
+    #data['active_sex'] = [1 if x in ['Intact'] else 0 for x in fixed_sex.str[0]]
+
+    data['fixed'] = [1 if x in ['Neutered', 'Spayed'] else 0 for x in fixed_sex.str[0]]
     
     #Sex
-    data['male'] = [1 if x in ['Male'] else 0 for x in fixed_sex.str[1]]
-    data['female'] = [1 if x in ['Female'] else 0 for x in fixed_sex.str[1]]
-    data['unknown_sex'] = [1 if x in ['Unknown'] else 0 for x in fixed_sex.str[0]]
+    #data['male'] = [1 if x in ['Male'] else 0 for x in fixed_sex.str[1]]
+    #data['female'] = [1 if x in ['Female'] else 0 for x in fixed_sex.str[1]]
+    #data['unknown_sex'] = [1 if x in ['Unknown'] else 0 for x in fixed_sex.str[0]]
     
-    #data['sex'] = fixed_sex.str[1]
-    #data['sex'] = [1 if x in['Male'] else 0 for x in data.sex]
+    data['sex'] = fixed_sex.str[1]
+    data['sex'] = [1 if x in['Male'] else 0 for x in data.sex]
+    
+    data['unknown_sex_fixed'] = [1 if x in ['Unknown'] else 0 for x in fixed_sex.str[0]]    
     
     #Age
     def calc_age_in_years(x):
@@ -90,7 +92,7 @@ def data_import(filepath):
     #Convert to catagorical variables
     data['year'] = data.year.astype(str)
     data['month'] = data.month.astype(str)
-    #data['dayofweek_num'] = data.dayofweek
+    data['dayofweek_num'] = data.dayofweek
     data['dayofweek'] = data.dayofweek.astype(str)
     data['hour'] = data.hour.astype(str)
     #data['weekofyear'] = data.weekofyear.astype(str)  
