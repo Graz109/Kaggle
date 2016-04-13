@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 def data_import(filepath):
     
     data = pd.read_csv(filepath)    
@@ -31,7 +30,7 @@ def data_import(filepath):
         
     #NOTE: All credit for this function goes to Kaggle user Eugenia Uchaeva!
     data['age_years'] = data.AgeuponOutcome.apply(calc_age_in_years)
-    #data['age_years'] = pd.to_numeric(data['age_years'])
+    #data['age_years'] = data['age_years'].astype(str)
     
     #Time of Outcome
     #Convert DateTime to day of week, time of day
@@ -47,15 +46,23 @@ def data_import(filepath):
     data['month'] = data.month.astype(str)
     data['dayofweek'] = data.dayofweek.astype(str)
     data['hour'] = data.hour.astype(str)
+    data['year'] = data.year.astype(str)
     #data['weekofyear'] = data.weekofyear.astype(str)  
         
+    #Color
+    data['color_length'] = [len(x) for x in data.Color]        
+        
+    #Named or not
+    data['named'] = [1 if x == False else 0 for x in pd.isnull(data.Name)]        
+    
     #Pull out mixed breed or mut
     def Breed_Type(x):
         x = str(x)
         if x.find('Mix') >= 0:
             return 'Unknown Mix'
         elif x.find('/') >= 0:
-            return 'Known Mix'
+            #return 'Known Mix'
+            return 'Unknown Mix'
         else:
             return 'Pure'
 
@@ -64,14 +71,14 @@ def data_import(filepath):
     
     #Create dummy variables out of categorical variables
     
-    data = data.drop(['DateTime','SexuponOutcome','AgeuponOutcome','breed_category','Name'], axis = 1)
+    data = pd.concat([data, pd.get_dummies(data[['sex','month','dayofweek','hour','year', 'breed_category']])], axis = 1)
+    
     
     #Drop unneeded columns
-    data = data.drop(['DateTime','SexuponOutcome','AgeuponOutcome'], axis = 1)
+    data = data.drop(['DateTime','SexuponOutcome','AgeuponOutcome','breed_category','hour', 'month', 'year', 'dayofweek','sex', 'Color', 'Name'], axis = 1)
     
     
     return(data)
-    
     
 train_import = pd.read_csv("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes/train.csv")
 
