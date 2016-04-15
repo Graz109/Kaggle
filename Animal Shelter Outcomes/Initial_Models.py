@@ -98,6 +98,9 @@ def data_import(filepath):
     #data['weekofyear'] = data.weekofyear.astype(str)  
         
         
+    #AM/PM: AM-[0-->12), PM-[12,24]
+    #data['AM'] = [1 if x in ['0','1','2','3','4','5','6','7','8','9','10','11'] else 0 for x in data.hour]
+        
     #Seasons
 #    def seasons(x):
 #        if x in ['3','4','5']:
@@ -114,6 +117,7 @@ def data_import(filepath):
     #data['weekend'] = [1 if x in ['5','6'] else 0 for x in data.dayofweek]
     #Color
     data['color_length'] = [len(x) for x in data.Color]        
+    data['single_color']= [0 if x.find('/') >= 0 else 1 for x in data.Color] #Terrible feature
     
     #Named or not
     data['named'] = [1 if x == False else 0 for x in pd.isnull(data.Name)]        
@@ -125,6 +129,8 @@ def data_import(filepath):
             return 'Unknown Mix'
         elif x.find('/') >= 0:
             #return 'Known Mix'
+            return 'Unknown Mix'
+        elif x.find('Domestic') >=0:
             return 'Unknown Mix'
         else:
             return 'Pure'
@@ -141,7 +147,7 @@ def data_import(filepath):
     data['Breed_words'] = [len(x.replace('/', ' ').replace('_', ' ').split(' ')) for x in data.Breed]        
     
     #Drop unneeded columns
-    data = data.drop(['dayofweek', 'month', 'year','hour','DateTime','SexuponOutcome','AgeuponOutcome','Breed', 'breed_category', 'Color', 'Name'], axis = 1)
+    data = data.drop(['dayofweek', 'month', 'year','hour','DateTime','SexuponOutcome','AgeuponOutcome','Color','Breed', 'breed_category', 'Name'], axis = 1)
     #'hour'
     
     return(data)
@@ -168,42 +174,6 @@ test_pred = pd.concat([age_test, test_pred], axis=1)
 #Condition Number
 #CN = np.sqrt( EV.max() / EV.min() )
 #print('Condition No.: {:.5f}').format( CN )
-
-
-#Function to break color combinations 
-#def color_split(x):
-#    #x = str(x)
-#    x = [item.replace(" ", "_") for item in x]
-#    x = [item.split('/') for item in x]
-#    return(x)
-#
-#colors = train.Color.unique()        
-#colors = color_split(colors)
-#colors = [item for sublist in colors for item in sublist]
-#
-#unique_colors = Counter(colors)
-#unique_colors = pd.DataFrame.from_dict(unique_colors, orient = 'index')
-#unique_colors = unique_colors.sort_index()
-#[item for sublist in l for item in sublist]
-
-#It appears I can focus on major color groups such as  Black, Blue, Brown, Calico, Chocolate, Cream, Red, orange, Tan, White, Yellow
-
-#Try to add just some basic colors first (Black, Blue, Brown, Red, White)
-
-#pred['black'] = [1 if x in 'Black' else 0 for x in train.Color]
-#pred['blue'] = [1 if x in 'Blue' else 0 for x in train.Color]
-#pred['brown'] = [1 if x in 'Brown' else 0 for x in train.Color]
-#pred['red'] = [1 if x in 'Red' else 0 for x in train.Color]
-#pred['white'] = [1 if x in 'White' else 0 for x in train.Color]
-
-
-#
-#test_pred['black'] = [1 if x in 'Black' else 0 for x in test.Color]
-#test_pred['blue'] = [1 if x in 'Blue' else 0 for x in test.Color]
-#test_pred['brown'] = [1 if x in 'Brown' else 0 for x in test.Color]
-#test_pred['red'] = [1 if x in 'Red' else 0 for x in test.Color]
-#test_pred['white'] = [1 if x in 'White' else 0 for x in test.Color]
-
 
 
 
@@ -240,6 +210,10 @@ resp = train['OutcomeType']
 #gsearch.fit(pred, resp)
 #gsearch.grid_scores_, gsearch.best_params_, gsearch.best_score_
 
+#Remove low importance features
+pred = pred.drop(['hour_5','hour_22','hour_21','hour_6','hour_23','hour_20','hour_7','hour_8','hour_10','hour_19','hour_0'], axis = 1)    
+test_pred = test_pred.drop(['hour_22','hour_21','hour_6','hour_23','hour_20','hour_7','hour_8','hour_10','hour_19','hour_0'], axis = 1)    
+#0.65995734969508768
 
 #Random Forest
 RF = ensemble.RandomForestClassifier(n_estimators = 10000, n_jobs = -1, verbose = 1, oob_score = True)
@@ -248,25 +222,15 @@ RF.fit(pred, resp)
 
 RF.oob_score_
 
-66081783830296681
-
-RF.oob_score_
-Out[124]: 0.64779827154027458
-
-#10000 Trees
-#len(breed), all dummys: 0.65247484006135659
-#len(breed), hour numeric: .6455535186
-#len(breed), all dummys, age_days: .6517265
-
-oob_list = []
-min = int(np.sqrt(pred.shape[1]).round(1))
-for i in range(min, min + 15):
-    RF = ensemble.RandomForestClassifier(n_estimators = 5000, n_jobs = -1, verbose = 10, oob_score = True, max_features = i)
-    RF.fit(pred, resp)
-    oob = RF.oob_score_
-    oob_list.append([i, oob])
-    print("Complete with ", i)
-    
+#oob_list = []
+#min = int(np.sqrt(pred.shape[1]).round(1))
+#for i in range(min, min + 15):
+#    RF = ensemble.RandomForestClassifier(n_estimators = 5000, n_jobs = -1, verbose = 10, oob_score = True, max_features = i)
+#    RF.fit(pred, resp)
+#    oob = RF.oob_score_
+#    oob_list.append([i, oob])
+#    print("Complete with ", i)
+#    
 
 ## words in breed: 0.65464476785513859
 def Feature_Importance_Plot(pred, fit_object):
@@ -282,28 +246,14 @@ def Feature_Importance_Plot(pred, fit_object):
 
 Feature_Importance_Plot(pred.columns, RF)
 
-#After an initil look. Pretty muchall the hour variables are limited in their usefullness
-#The 3 breed catagories are also low
-
-#Remove Hours from dataset and adjust breed to 2 categories Mix/Pure
 
 
-#    
-#pred = train.drop(['AnimalID', 'OutcomeType', 'OutcomeSubtype', 'AnimalType', 'Breed', 'Color','age_years','hour_0', 'hour_10', 'hour_11', 'hour_12',
-#       'hour_13', 'hour_14', 'hour_15', 'hour_16', 'hour_17', 'hour_18',
-#       'hour_19', 'hour_20', 'hour_21', 'hour_22', 'hour_23', 'hour_5',
-#       'hour_6', 'hour_7', 'hour_8', 'hour_9'], axis = 1)
-#pred = pd.concat([age, pred], axis=1)
-#
-#test_pred = test.drop(['ID', 'AnimalType', 'Breed', 'Color', 'age_years', 'hour_0', 'hour_10', 'hour_11', 'hour_12',
-#       'hour_13', 'hour_14', 'hour_15', 'hour_16', 'hour_17', 'hour_18',
-#       'hour_19', 'hour_20', 'hour_21', 'hour_22', 'hour_23', 'hour_3',
-#       'hour_6', 'hour_7', 'hour_8', 'hour_9'], axis = 1)
-#test_pred = pd.concat([age_test, test_pred], axis = 1)
-#
-#RF1 = ensemble.RandomForestClassifier(n_estimators = 10000, n_jobs = -1, verbose = 10,oob_score=True)
-#RF1.fit(pred, resp)
-#Feature_Importance_Plot(pred.columns, RF1)
+#Explore color
+data = pd.read_csv("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes/train.csv")    
+unique_colors = data.Color.unique()
+len(unique_colors)
+
+
 
 
 
@@ -354,5 +304,58 @@ hybrid = XGB_half + RF_half
 hybrid.to_csv("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes/hybrid_pred.csv", header = XGB.classes_ )
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Function to break color combinations 
+#def color_split(x):
+#    #x = str(x)
+#    x = [item.replace(" ", "_") for item in x]
+#    x = [item.split('/') for item in x]
+#    return(x)
+#
+#colors = train.Color.unique()        
+#colors = color_split(colors)
+#colors = [item for sublist in colors for item in sublist]
+#
+#unique_colors = Counter(colors)
+#unique_colors = pd.DataFrame.from_dict(unique_colors, orient = 'index')
+#unique_colors = unique_colors.sort_index()
+#[item for sublist in l for item in sublist]
+
+#It appears I can focus on major color groups such as  Black, Blue, Brown, Calico, Chocolate, Cream, Red, orange, Tan, White, Yellow
+
+#Try to add just some basic colors first (Black, Blue, Brown, Red, White)
+#
+#pred['black'] = [1 if x in 'Black' else 0 for x in train.Color]
+#pred['blue'] = [1 if x in 'Blue' else 0 for x in train.Color]
+#pred['brown'] = [1 if x in 'Brown' else 0 for x in train.Color]
+#pred['red'] = [1 if x in 'Red' else 0 for x in train.Color]
+#pred['white'] = [1 if x in 'White' else 0 for x in train.Color]
+#
+#
+#
+#test_pred['black'] = [1 if x in 'Black' else 0 for x in test.Color]
+#test_pred['blue'] = [1 if x in 'Blue' else 0 for x in test.Color]
+#test_pred['brown'] = [1 if x in 'Brown' else 0 for x in test.Color]
+#test_pred['red'] = [1 if x in 'Red' else 0 for x in test.Color]
+#test_pred['white'] = [1 if x in 'White' else 0 for x in test.Color]
+#
+#pred = pred.drop(['Color'], axis=1)
+#test_pred = test_pred.drop(['Color'], axis = 1)
 
 
