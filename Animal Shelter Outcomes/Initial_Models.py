@@ -1,15 +1,10 @@
 import sklearn as sk
 from sklearn import ensemble
 import pandas as pd
-import operator
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
-import statsmodels as st
-from calendar import monthrange
 
-
-import xgboost as xgb
 from xgboost.sklearn import XGBClassifier
 
 def data_import(filepath):
@@ -147,7 +142,7 @@ def data_import(filepath):
     data['Breed_words'] = [len(x.replace('/', ' ').replace('_', ' ').split(' ')) for x in data.Breed]        
     
     #Drop unneeded columns
-    data = data.drop(['dayofweek', 'month', 'year','hour','DateTime','SexuponOutcome','AgeuponOutcome','Color','Breed', 'breed_category', 'Name'], axis = 1)
+    data = data.drop(['dayofweek', 'month', 'year','hour','DateTime','SexuponOutcome','AgeuponOutcome','Breed', 'breed_category', 'Name'], axis = 1)
     #'hour'
     
     return(data)
@@ -191,6 +186,54 @@ test_pred = pd.concat([age_test, test_pred], axis=1)
 #a = data.apply(lam, (2013, 4))
 #
 #a = data[['year','month']].apply(monthrange)
+
+
+
+#Function to break color combinations 
+def color_split(x):
+    #x = str(x)
+    x = [item.replace(" ", "_") for item in x]
+    x = [item.split('/') for item in x]
+    #x = [item.split(' ') for item in x]
+    return(x)
+
+colors = train.Color.unique()        
+colors = color_split(colors)
+colors = [item for sublist in colors for item in sublist]
+
+unique_colors = Counter(colors)
+unique_colors = pd.DataFrame.from_dict(unique_colors, orient = 'index')
+unique_colors = unique_colors.sort_index()
+#[item for sublist in l for item in sublist]
+
+#It appears I can focus on major color groups such as  Black, Blue, Brown, Calico, Chocolate, Cream, Red, orange, Tan, White, Yellow
+
+#Try to add just some basic colors first (Black, Blue, Brown, Red, White)
+
+pred['black'] = [1 if x.find('Black') >=0 else 0 for x in train.Color]
+pred['blue'] = [1 if x.find('Blue') >=0 else 0 for x in train.Color]
+pred['brown'] = [1 if x.find('Brown') >=0 else 0 for x in train.Color]
+pred['tan'] = [1 if x.find('Tan') >=0 else 0 for x in train.Color]
+pred['white'] = [1 if x.find('White') >=0 else 0 for x in train.Color]
+pred['tabby'] = [1 if x.find('Tabby') >=0 else 0 for x in train.Color]
+
+
+test_pred['black'] = [1 if x.find('Black') >=0 else 0 for x in test.Color]
+test_pred['blue'] = [1 if x.find('Blue') >=0 else 0 for x in test.Color]
+test_pred['brown'] = [1 if x.find('Brown') >=0 else 0 for x in test.Color]
+test_pred['tan'] = [1 if x.find('Tan') >=0 else 0 for x in test.Color]
+test_pred['white'] = [1 if x.find('White') >=0 else 0 for x in test.Color]
+test_pred['tabby'] = [1 if x.find('Tabby') >=0 else 0 for x in test.Color]
+
+pred = pred.drop(['Color'], axis=1)
+test_pred = test_pred.drop(['Color'], axis = 1)
+
+
+
+
+
+
+
 
 
 
@@ -304,58 +347,5 @@ hybrid = XGB_half + RF_half
 hybrid.to_csv("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes/hybrid_pred.csv", header = XGB.classes_ )
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#Function to break color combinations 
-#def color_split(x):
-#    #x = str(x)
-#    x = [item.replace(" ", "_") for item in x]
-#    x = [item.split('/') for item in x]
-#    return(x)
-#
-#colors = train.Color.unique()        
-#colors = color_split(colors)
-#colors = [item for sublist in colors for item in sublist]
-#
-#unique_colors = Counter(colors)
-#unique_colors = pd.DataFrame.from_dict(unique_colors, orient = 'index')
-#unique_colors = unique_colors.sort_index()
-#[item for sublist in l for item in sublist]
-
-#It appears I can focus on major color groups such as  Black, Blue, Brown, Calico, Chocolate, Cream, Red, orange, Tan, White, Yellow
-
-#Try to add just some basic colors first (Black, Blue, Brown, Red, White)
-#
-#pred['black'] = [1 if x in 'Black' else 0 for x in train.Color]
-#pred['blue'] = [1 if x in 'Blue' else 0 for x in train.Color]
-#pred['brown'] = [1 if x in 'Brown' else 0 for x in train.Color]
-#pred['red'] = [1 if x in 'Red' else 0 for x in train.Color]
-#pred['white'] = [1 if x in 'White' else 0 for x in train.Color]
-#
-#
-#
-#test_pred['black'] = [1 if x in 'Black' else 0 for x in test.Color]
-#test_pred['blue'] = [1 if x in 'Blue' else 0 for x in test.Color]
-#test_pred['brown'] = [1 if x in 'Brown' else 0 for x in test.Color]
-#test_pred['red'] = [1 if x in 'Red' else 0 for x in test.Color]
-#test_pred['white'] = [1 if x in 'White' else 0 for x in test.Color]
-#
-#pred = pred.drop(['Color'], axis=1)
-#test_pred = test_pred.drop(['Color'], axis = 1)
 
 
