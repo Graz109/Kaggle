@@ -10,7 +10,7 @@ from xgboost.sklearn import XGBClassifier
 def data_import(filepath):
     
     data = pd.read_csv(filepath)    
-    
+ 
     #fixed or not
     fixed_sex = data['SexuponOutcome'].str.split(' ')
     #If spayed or neutered, make fixed 1, else false
@@ -132,7 +132,6 @@ def data_import(filepath):
 
     data['breed_category'] = data.Breed.apply(Breed_Type)
     
-    
     #Create dummy variables out of categorical variables
     
     data = pd.concat([data, pd.get_dummies(data[['month','dayofweek', 'year','hour']])], axis = 1)
@@ -149,6 +148,20 @@ def data_import(filepath):
     
 train = data_import("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes/train.csv")
 test = data_import("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes/test.csv")
+
+
+data = pd.read_csv("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes/train.csv")    
+intake = pd.read_csv("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes/Austin_Animal_Center_Intakes.csv")
+#ADD INTAKE DATA
+intake['AnimalID'] = intake['Animal ID']
+    
+    #The Kaggle dataset only has the first observation of AnimalID
+intake = intake.drop_duplicates(subset = "AnimalID", keep ='first')
+    
+    #merge data and intake on AnimalID. Bring Found Location, Intake Type, Intake Condition
+data = pd.merge(data, intake[['AnimalID','Found Location', 'Intake Type', 'Intake Condition']], how='left', on='AnimalID')
+
+
 
 
 age = train['age_years']
@@ -210,30 +223,23 @@ unique_colors = unique_colors.sort_index()
 
 #Try to add just some basic colors first (Black, Blue, Brown, Red, White)
 
-pred['black'] = [1 if x.find('Black') >=0 else 0 for x in train.Color]
-pred['blue'] = [1 if x.find('Blue') >=0 else 0 for x in train.Color]
-pred['brown'] = [1 if x.find('Brown') >=0 else 0 for x in train.Color]
-pred['tan'] = [1 if x.find('Tan') >=0 else 0 for x in train.Color]
-pred['white'] = [1 if x.find('White') >=0 else 0 for x in train.Color]
-pred['tabby'] = [1 if x.find('Tabby') >=0 else 0 for x in train.Color]
-
-
-test_pred['black'] = [1 if x.find('Black') >=0 else 0 for x in test.Color]
-test_pred['blue'] = [1 if x.find('Blue') >=0 else 0 for x in test.Color]
-test_pred['brown'] = [1 if x.find('Brown') >=0 else 0 for x in test.Color]
-test_pred['tan'] = [1 if x.find('Tan') >=0 else 0 for x in test.Color]
-test_pred['white'] = [1 if x.find('White') >=0 else 0 for x in test.Color]
-test_pred['tabby'] = [1 if x.find('Tabby') >=0 else 0 for x in test.Color]
-
-pred = pred.drop(['Color'], axis=1)
-test_pred = test_pred.drop(['Color'], axis = 1)
-
-
-
-
-
-
-
+#pred['black'] = [1 if x.find('Black') >=0 else 0 for x in train.Color]
+#pred['blue'] = [1 if x.find('Blue') >=0 else 0 for x in train.Color]
+#pred['brown'] = [1 if x.find('Brown') >=0 else 0 for x in train.Color]
+#pred['tan'] = [1 if x.find('Tan') >=0 else 0 for x in train.Color]
+#pred['white'] = [1 if x.find('White') >=0 else 0 for x in train.Color]
+#pred['tabby'] = [1 if x.find('Tabby') >=0 else 0 for x in train.Color]
+#
+#
+#test_pred['black'] = [1 if x.find('Black') >=0 else 0 for x in test.Color]
+#test_pred['blue'] = [1 if x.find('Blue') >=0 else 0 for x in test.Color]
+#test_pred['brown'] = [1 if x.find('Brown') >=0 else 0 for x in test.Color]
+#test_pred['tan'] = [1 if x.find('Tan') >=0 else 0 for x in test.Color]
+#test_pred['white'] = [1 if x.find('White') >=0 else 0 for x in test.Color]
+#test_pred['tabby'] = [1 if x.find('Tabby') >=0 else 0 for x in test.Color]
+#
+#pred = pred.drop(['Color'], axis=1)
+#test_pred = test_pred.drop(['Color'], axis = 1)
 
 
 
@@ -335,16 +341,15 @@ test_output.to_csv("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes
 
 
 
-
-
-
-
 #COMBINE RF AND XGB PREDICTIONS
 XGB_half = test_predictions_XGB/2
 RF_half = test_predictions/2
 
 hybrid = XGB_half + RF_half
 hybrid.to_csv("/Users/grazim/Documents/Kaggle_Local/Shelter Animal Outcomes/hybrid_pred.csv", header = XGB.classes_ )
+
+
+
 
 
 
